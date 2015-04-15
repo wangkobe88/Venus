@@ -1,0 +1,22 @@
+member 1 category
+age 2 category
+gender 3 category
+newV 4 category
+sameprovice 5 category
+samecity 6 category
+fans 7 partation
+follows 8 partation
+weibocount 9 partation
+samecorp 10 category
+sameschool 11 category
+qinmidu 12 partation
+bridgenum 13 partation
+level 14 category
+isred 15 category
+isvip 16 category
+samecluster 17 category
+histroyrpm 18 partation
+histroyctr 19 partation
+histroyrpm2 20 partation
+
+
