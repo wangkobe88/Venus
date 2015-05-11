@@ -40,15 +40,22 @@ class DataSet(object):
             name = line[0]
             pos = int(line[1])
             type = line[2]
+
+            feature1 = 0
+            feature2 = 0
+
+            if len(line) > 3:
+                feature1 = int(line[3])
+                feature2 = int(line[4])
             
-            self.confInfo.append(ConfInfo(name,pos,type))
+            self.confInfo.append(ConfInfo(name,pos,type,feature1,feature2))
             line = conf_file.readline()
         conf_file.close()
 
     def buildFeatures(self):
         feature_factory = FeatureFactory()
         for info in self.confInfo:
-            self.features[info.pos] = feature_factory.createFeature(info.type,info.name)
+            self.features[info.pos] = feature_factory.createFeature(info.type,info.name,info.feature1,info.feature2,self.features)
         #print self.features
 
     def analysis(self):

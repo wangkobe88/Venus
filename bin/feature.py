@@ -21,6 +21,9 @@ class Feature(object):
 
     def plot(self):
         pass
+    
+    def getPoints(self):
+        pass
 
     def clear(self):
         self.x_values = []
@@ -30,6 +33,9 @@ class CategoryFeature(Feature):
         Feature.__init__(self,name,type)
         self.categories = []
         self.category_statistics = {}
+
+    def getPoints(self):
+        return self.category_statistics
     
     def getStatistics(self):
         for i in range(len(self.x_values)):
@@ -46,6 +52,11 @@ class CategoryFeature(Feature):
         report_file.write("------" + self.name + "------" + self.type + "------" + "\n")
         for key in self.category_statistics.keys():
             report_file.write(self.category_statistics[key].printInfo())
+
+    def getPartationPoint(self,key):
+        for i in range(0,len(self.categories)):
+            if self.categories[i] == key:
+                return i
 
     def plotall(self,dataset_name):
         for obj in ("rpm","ctr","expo"):
@@ -79,6 +90,9 @@ class PartationFeature(Feature):
         Feature.__init__(self,name,type)
         self.partation_points = []
         self.partation_statistics = {}
+    
+    def getPoints(self):
+        return self.partation_points
 
     def getPartationPoint(self,key):
         low = 0
@@ -159,3 +173,92 @@ class PartationFeature(Feature):
         #savefig("../pics/"+self.name+"/"+dataset_name+".png")
         #show()
         clf()
+
+class CrossFeature(Feature):
+    def __init__(self,name,type,fea1,fea2,features):
+        Feature.__init__(self,name,type)
+        self.feature1_index = fea1
+        self.feature2_index = fea2
+    
+        self.feature1 = features[fea1]
+        self.feature2 = features[fea2]
+        
+        self.points_statistics = {}
+    
+    def hash_code(self,fea1_index,fea2_index):
+        return fea1_index + 100*fea2_index
+    
+    def getStatistics(self):
+        #print len(self.feature1.x_values)
+        #print len(self.feature1.y_values)
+        
+        for i in range(0,len(self.feature1.getPoints())):
+            for j in range(0,len(self.feature2.getPoints())):
+                hashcode = self.hash_code(i,j)
+                #print hashcode
+                if hashcode not in self.points_statistics:
+                    self.points_statistics[hashcode] = StatistcsInfo(hashcode)
+        #self.points_statistics[hashcode].process(self.y_values[i])
+        print "-----------------------"
+        for i in range(0,len(self.feature1.x_values)):
+            fea1_index = self.feature1.getPartationPoint(self.feature1.x_values[i])
+            fea2_index = self.feature2.getPartationPoint(self.feature2.x_values[i])
+            hashcode = self.hash_code(fea1_index,fea2_index)
+            #print hashcode
+            self.points_statistics[hashcode].process(self.feature1.y_values[i])
+
+        for i in range(0,len(self.feature1.getPoints())):
+            for j in range(0,len(self.feature2.getPoints())):
+                hashcode = self.hash_code(i,j)
+                if hashcode in self.points_statistics:
+                    self.points_statistics[hashcode].calculator()
+
+    def printInfo(self,report_file):
+        report_file.write("------" + self.name + "------" + self.type + "------" + "\n")
+        for key in self.points_statistics.keys():
+            report_file.write(self.points_statistics[key].printInfo())
+                
+    def plotall(self,dataset_name):
+        for obj in ("rpm","ctr","expo"):
+            self.plot(dataset_name,obj)
+    
+    def plot(self,dataset_name,obj):
+        from numpy import *
+        import pylab as py
+        import mpl_toolkits.mplot3d.axes3d as p3
+        x = []
+
+        for i in range(len(self.feature1.getPoints())):
+            x.append([])
+            for j in range(len(self.feature2.getPoints())):
+                x[i].append(i)
+
+        y = []
+        for i in range(len(self.feature1.getPoints())):
+            y.append([])
+            for j in range(len(self.feature2.getPoints())):
+                y[i].append(j)
+
+        #print x
+        #print y
+        z = []
+        for i in range(len(self.feature1.getPoints())):
+            z.append([])
+            for j in range(len(self.feature2.getPoints())):
+                z[i].append(self.points_statistics[self.hash_code(i,j)].getinfo(obj))
+
+        fig = py.figure()
+        ax = p3.Axes3D(fig)
+        ax.plot_wireframe(x,y,z)
+        ax.set_xlabel(self.feature1.name)
+        ax.set_ylabel(self.feature2.name)
+        ax.set_zlabel(obj)
+#py.show()
+    
+        if not os.path.isdir("../pics/"+self.name+"/"):
+            os.mkdir("../pics/"+self.name+"/")
+        
+        py.savefig("../pics/"+self.name+"/"+dataset_name+"_"+obj+".png")
+        #show()
+        py.clf()
+

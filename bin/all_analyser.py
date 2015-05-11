@@ -2,6 +2,7 @@ import random
 import os
 import gc
 import sys
+import random
 
 from utilitis import *
 from feature_factory import *
@@ -94,12 +95,43 @@ class AllDataSet(object):
         for key in self.features.keys():
             self.features[key].printInfo(report_file)
 
+    def init_point(self,dis_file):
+        line = dis_file.readline()
+        while line:
+            line = line.strip().split(' ')
+            if len(line) < 2:
+                break
+            key = line[0]
+            self.features[key].partation_points = []
+            for i in range(1,len(line)):
+                self.features[key].partation_points.append(line[i])
+            line = dis_file.readline()
+        dis_file.close()
+
+    def re_processlogs(self,newlog_file):
+        for loginfo in self.logsInfo:
+            newlog = str(loginfo.y) + " "
+            for i in range(0,len(loginfo.x)):
+                if (i+1) in self.features.keys() and isinstance(self.features[i+1],PartationFeature):
+                    if not loginfo.x[i] == 'NULL':
+                        partation_point = self.features[i+1].getPartationPoint(int(float(loginfo.x[i])))
+                        newlog = newlog + str(partation_point)
+                    else:
+                        newlog = newlog + "0"
+                else:
+                        newlog = newlog + loginfo.x[i]
+                newlog = newlog + " "
+            newlog += "\n"
+            newlog_file.write(newlog)
+
 if __name__ ==  "__main__":
     logs_path = sys.argv[1]
     conf_filename = sys.argv[2]
     dis_filename = sys.argv[3]
+    newlog_filename = sys.argv[4]
     
     dis_file = open(dis_filename,'w')
+    newlog_file = open(newlog_filename,'w')
     
     print logs_path,conf_filename,dis_filename
 
@@ -110,5 +142,7 @@ if __name__ ==  "__main__":
     dataset.analysis()
     dataset.clear()
     dataset.write_points(dis_file)
+    dataset.re_processlogs(newlog_file)
+
     #dataset.generate_pics()
     #dataset.generate_report(report_file)
